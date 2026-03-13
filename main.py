@@ -10,7 +10,7 @@ from dotenv import dotenv_values
 # Configuration
 env = dotenv_values()
 
-RSS_URL = env.get("RSS_URL", None)
+RSS_FEED = env.get("RSS_FEED", None)
 TELEGRAM_BOT_TOKEN = env.get("TELEGRAM_BOT_TOKEN", None)
 TELEGRAM_CHAT_ID = env.get("TELEGRAM_CHAT_ID", None)
 SEEN_URLS_FILE = env.get("SEEN_URLS_FILE", None)
@@ -46,7 +46,7 @@ def send_telegram_message(text):
 
 def main():
     seen_urls = load_seen_urls()
-    feed = feedparser.parse(RSS_URL)
+    feed = feedparser.parse(RSS_FEED)
 
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
