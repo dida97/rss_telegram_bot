@@ -22,8 +22,6 @@ assert OPENROUTER_API_KEY, "Provide an Openrouter API Key."
 
 class AnalysisResult(BaseModel):
     relevant: bool
-    commentary: str
-
 
 def load_seen_urls():
     if os.path.exists(SEEN_URLS_FILE):
@@ -60,18 +58,16 @@ def main():
         if not link or link in seen_urls:
             continue
 
-        title = entry.get("title", "No Title")
-        summary = entry.get("summary", "No Summary")
+        title = entry.get("title", NO_TITLE_STRING)
+        summary = entry.get("summary", NO_SUMMARY_STRING)
 
         prompt = f"""
         Analyze the following RSS feed item. 
         Criteria: {INTEREST_CRITERIA}
         Title: {title}
         Summary: {summary}
-        
-        Determine if it is relevant to the criteria. If it is, provide a single-sentence minimal commentary.
-        Respond ONLY with a valid JSON object matching this exact schema:
-        {{"relevant": boolean, "commentary": "string"}}
+        Determine if it is relevant to the criteria specified by the user. 
+        Respond **ONLY** with a valid **JSON** object matching **THIS EXACT SCHEMA**: {{"relevant" : bool}}
         """
 
         try:
@@ -89,17 +85,17 @@ def main():
             raw_content = response.choices[0].message.content
             # Valida e converte la stringa JSON nel modello Pydantic
             result = AnalysisResult.model_validate_json(raw_content)
-
-            if result.relevant:
-                message = "\n\n" + f"<b>{title}</b>\n\n{result.commentary}\n\n<a href='{link}'>Read more</a>"
-                send_telegram_message(message)
             
+            if result.relevant:
+                message = "\n\n" + f"<b>{title}</b>\n\n<a href='{link}'>Read more</a>"
+                send_telegram_message(message)
+                add_seen_url(RSS_FEED, link)
             
         except Exception as e:
             print(f"Error processing {link}: {e}")
-    
-        seen_urls.add(link)
-    
+            print(f"Adding Back this entry to the queue")
+            feed.entries.append(entry)
+
 
     save_seen_urls(seen_urls)
 
