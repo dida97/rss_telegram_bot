@@ -26,6 +26,7 @@ cursor.execute('''
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source_name TEXT NOT NULL,
         feed_url TEXT NOT NULL UNIQUE,
+        topics_of_interest TEXT NOT NULL,
         added_at TEXT NOT NULL
     )
 ''')
@@ -45,11 +46,11 @@ def add_seen_url(feed_url, article_url):
     )
     conn.commit()
 
-def add_feed_source(source_name, feed_url):
+def add_feed_source(source_name, feed_url, topics_of_interest):
     added_at = datetime.now().isoformat()
     cursor.execute(
-        'INSERT OR IGNORE INTO feed_sources (source_name, feed_url, added_at) VALUES (?, ?, ?)',
-        (source_name, feed_url, added_at)
+        'INSERT OR IGNORE INTO feed_sources (source_name, feed_url, topics_of_interest, added_at) VALUES (?, ?, ?, ?)',
+        (source_name, feed_url, topics_of_interest, added_at)
     )
     conn.commit()
 
@@ -63,7 +64,6 @@ env = dotenv_values()
 RSS_FEED = env.get("RSS_FEED", None)
 TELEGRAM_BOT_TOKEN = env.get("TELEGRAM_BOT_TOKEN", None)
 TELEGRAM_CHAT_ID = env.get("TELEGRAM_CHAT_ID", None)
-SEEN_URLS_FILE = env.get("SEEN_URLS_FILE", "data/seen_urls.json")
 INTEREST_CRITERIA = env.get("INTEREST_CRITERIA", None)
 OPENROUTER_API_KEY = env.get("OPENROUTER_API_KEY", None)
 
@@ -76,10 +76,6 @@ class AnalysisResult(BaseModel):
 def load_seen_urls():
 
     pass
-
-def save_seen_urls(seen_urls):
-    with open(SEEN_URLS_FILE, "w") as f:
-        json.dump(list(seen_urls), f)
 
 
 def send_telegram_message(text):
