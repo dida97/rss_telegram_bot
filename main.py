@@ -4,8 +4,58 @@ import requests
 import feedparser
 from openai import OpenAI
 from pydantic import BaseModel
-import logging
 from dotenv import dotenv_values
+
+from datetime import datetime
+import sqlite3
+os.makedirs('data', exist_ok=True)
+conn = sqlite3.connect('data/data.db')
+cursor = conn.cursor()
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS seen_urls (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feed_url TEXT NOT NULL,
+        article_url TEXT NOT NULL,
+        detected_at TEXT NOT NULL
+    )
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS feed_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_name TEXT NOT NULL,
+        feed_url TEXT NOT NULL UNIQUE,
+        added_at TEXT NOT NULL
+    )
+''')
+
+def is_url_seen(feed_url, article_url):
+    cursor.execute(
+        'SELECT 1 FROM seen_urls WHERE feed_url = ? AND article_url = ?',
+        (feed_url, article_url)
+    )
+    return cursor.fetchone() is not None
+
+def add_seen_url(feed_url, article_url):
+    detected_at = datetime.now().isoformat()
+    cursor.execute(
+        'INSERT INTO seen_urls (feed_url, article_url, detected_at) VALUES (?, ?, ?)',
+        (feed_url, article_url, detected_at)
+    )
+    conn.commit()
+
+def add_feed_source(source_name, feed_url):
+    added_at = datetime.now().isoformat()
+    cursor.execute(
+        'INSERT OR IGNORE INTO feed_sources (source_name, feed_url, added_at) VALUES (?, ?, ?)',
+        (source_name, feed_url, added_at)
+    )
+    conn.commit()
+
+NO_TITLE_STRING = "No Title"
+NO_SUMMARY_STRING = "No Summary"
+
 
 # Configuration
 env = dotenv_values()
@@ -13,7 +63,7 @@ env = dotenv_values()
 RSS_FEED = env.get("RSS_FEED", None)
 TELEGRAM_BOT_TOKEN = env.get("TELEGRAM_BOT_TOKEN", None)
 TELEGRAM_CHAT_ID = env.get("TELEGRAM_CHAT_ID", None)
-SEEN_URLS_FILE = env.get("SEEN_URLS_FILE", None)
+SEEN_URLS_FILE = env.get("SEEN_URLS_FILE", "data/seen_urls.json")
 INTEREST_CRITERIA = env.get("INTEREST_CRITERIA", None)
 OPENROUTER_API_KEY = env.get("OPENROUTER_API_KEY", None)
 
@@ -24,11 +74,8 @@ class AnalysisResult(BaseModel):
     relevant: bool
 
 def load_seen_urls():
-    if os.path.exists(SEEN_URLS_FILE):
-        with open(SEEN_URLS_FILE, "r") as f:
-            return set(json.load(f))
-    return set()
 
+    pass
 
 def save_seen_urls(seen_urls):
     with open(SEEN_URLS_FILE, "w") as f:
@@ -43,7 +90,7 @@ def send_telegram_message(text):
 
 
 def main():
-    seen_urls = load_seen_urls()
+
     feed = feedparser.parse(RSS_FEED)
 
     client = OpenAI(
@@ -55,7 +102,7 @@ def main():
 
     for entry in feed.entries:
         link = entry.get("link")
-        if not link or link in seen_urls:
+        if not link or is_url_seen(RSS_FEED, link):
             continue
 
         title = entry.get("title", NO_TITLE_STRING)
@@ -74,9 +121,6 @@ def main():
 
             response = client.chat.completions.create(
                 model="stepfun/step-3.5-flash:free",
-                extra_body = {        
-                    "models": ["nvidia/nemotron-3-super-120b-a12b:free", "qwen/qwen3-next-80b-a3b-instruct:free"],
-                },
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 temperature=0.1,
@@ -87,7 +131,7 @@ def main():
             result = AnalysisResult.model_validate_json(raw_content)
             
             if result.relevant:
-                message = "\n\n" + f"<b>{title}</b>\n\n<a href='{link}'>Read more</a>"
+                message =  f"<b>{title}</b>\n\n<a href='{link}'>Read more</a>"
                 send_telegram_message(message)
                 add_seen_url(RSS_FEED, link)
             
@@ -95,9 +139,6 @@ def main():
             print(f"Error processing {link}: {e}")
             print(f"Adding Back this entry to the queue")
             feed.entries.append(entry)
-
-
-    save_seen_urls(seen_urls)
 
 
 
