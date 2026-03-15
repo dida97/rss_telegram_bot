@@ -17,13 +17,12 @@ class Config:
         openrouter_api_key = env.get("OPENROUTER_API_KEY")
 
         if not all([telegram_bot_token, telegram_chat_id, openrouter_api_key]):
-            missing = [
-                k for k, v in {
-                    "TELEGRAM_BOT_TOKEN": telegram_bot_token,
-                    "TELEGRAM_CHAT_ID": telegram_chat_id,
-                    "OPENROUTER_API_KEY": openrouter_api_key
-                }.items() if not v
-            ]
+            env_vars: dict[str, str | None] = {
+                "TELEGRAM_BOT_TOKEN": telegram_bot_token,
+                "TELEGRAM_CHAT_ID": telegram_chat_id,
+                "OPENROUTER_API_KEY": openrouter_api_key
+            }
+            missing: list[str] = [k for k, v in env_vars.items() if not v]
             raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
         return cls(

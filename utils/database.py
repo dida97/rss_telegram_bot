@@ -1,13 +1,13 @@
-import os
 import sqlite3
 from datetime import datetime
 from contextlib import contextmanager
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any
 
 class Database:
-    def __init__(self, db_path: str = "data/data.db"):
-        self.db_path = db_path
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+    def __init__(self, db_path: str | Path = "data/data.db"):
+        self.db_path = Path(db_path)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
     @contextmanager
@@ -69,7 +69,7 @@ class Database:
             )
             conn.commit()
 
-    def get_all_sources(self) -> List[Dict[str, Any]]:
+    def get_all_sources(self) -> list[dict[str, Any]]:
         with self.get_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()

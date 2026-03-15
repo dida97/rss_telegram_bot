@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
-from main import (
+from bot.handlers import (
     URL, NAME, CRITERIA, CONFIRMATION,
     start, add_source_start, add_source_url, add_source_name, add_source_criteria, cancel
 )

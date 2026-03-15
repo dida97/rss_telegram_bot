@@ -1,5 +1,5 @@
 import logging
-from openai import OpenAI
+from openai import AsyncOpenAI
 from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -12,9 +12,9 @@ class FeedAnalyzer:
         self.api_key = api_key
         self.base_url = base_url
         self.model = model
-        self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
+        self.client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
-    def is_relevant(self, title: str, summary: str, criteria: str) -> bool:
+    async def is_relevant(self, title: str, summary: str, criteria: str) -> bool:
         prompt = f"""
         Analyze the following RSS feed item. 
         Criteria: {criteria}
@@ -25,7 +25,7 @@ class FeedAnalyzer:
         """
 
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},

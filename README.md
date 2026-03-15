@@ -66,3 +66,21 @@ python -m unittest discover tests
 MIT License
 
 ---
+```
+rss_telegram_bot
+├─ README.md
+├─ bot
+│  ├─ __init__.py
+│  ├─ handlers.py
+│  └─ jobs.py
+├─ config.py
+├─ main.py
+├─ tests
+│  ├─ test_analyzer.py
+│  └─ test_bot.py
+└─ utils
+   ├─ __init__.py
+   ├─ analyzer.py
+   └─ database.py
+
+```
