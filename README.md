@@ -30,15 +30,9 @@ A Python bot that monitors RSS feeds and sends updates to a Telegram channel or 
 
 3. Configure environment variables in .env:
    ```
-   TELEGRAM_TOKEN=your_bot_token
-   TELEGRAM_CHAT_ID=your_chat_id
-   RSS_FEED=https://example.com/feed1.xml,https://example.com/feed2.xml
-   
-   TELEGRAM_BOT_TOKEN = "your-bot-token"
-   TELEGRAM_CHAT_ID = "your-chat"
-   SEEN_URLS_FILE = "seen_urls.json"
-    
-   INTEREST_CRITERIA = "Your topics of interest."
+   TELEGRAM_BOT_TOKEN="your-bot-token"
+   TELEGRAM_CHAT_ID="your-chat-id"
+   OPENROUTER_API_KEY="your-openrouter-key"
    ```
 
 ## Usage
@@ -50,9 +44,11 @@ python main.py
 
 ## Files
 
-- main.py: Main bot logic
-- seen_urls.json: Stores URLs already sent
-- tests: Test scripts
+- `main.py`: Main entry point and initialization
+- `bot/`: Contains conversational handlers and background jobs
+- `utils/`: Contains database class and LLM analyzer
+- `data/data.db`: SQLite database for storing URLs and sources (generated upon run)
+- `tests/`: Test scripts
 
 ## Testing
 

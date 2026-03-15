@@ -1,0 +1,5 @@
+python-telegram-bot
+feedparser
+openai
+pydantic
+python-dotenv
