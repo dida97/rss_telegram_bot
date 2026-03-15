@@ -37,9 +37,55 @@ A Python bot that monitors RSS feeds and sends updates to a Telegram channel or 
 
 ## Usage
 
-Run the bot:
+Run the bot interactively:
 ```
 python main.py
+```
+
+### Daemon Deployment (Ubuntu)
+
+To run the bot in the background as a systemd service:
+
+1. Create a service file:
+```bash
+sudo nano /etc/systemd/system/rss_telegram_bot.service
+```
+
+2. Add the following configuration (adjust paths and user):
+```ini
+[Unit]
+Description=RSS Telegram Bot
+After=network.target
+
+[Service]
+User=your_username
+WorkingDirectory=/path/to/rss_telegram_bot
+ExecStart=/path/to/virtualenv/bin/python main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Enable and start the service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now rss_telegram_bot.service
+```
+
+4. Manage the service:
+```bash
+# Stop the service
+sudo systemctl stop rss_telegram_bot.service
+
+# Restart the service
+sudo systemctl restart rss_telegram_bot.service
+
+# Check status
+sudo systemctl status rss_telegram_bot.service
+
+# View logs
+sudo journalctl -u rss_telegram_bot.service -f
 ```
 
 ## Files
